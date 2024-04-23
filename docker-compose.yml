@@ -1,10 +1,13 @@
 version: '3'
 services:
+# Terraform
   terraform:
     image: hashicorp/terraform:latest
     volumes:
       - .:/terraform
     working_dir: /terraform
+
+# AWS CLI
   aws:
     image: anigeo/awscli
     environment:
@@ -15,4 +18,18 @@ services:
     volumes:
       - $PWD:/app
     working_dir: /app
-  
+
+# Jenkins  
+  jenkins:
+    container_name: jenkins
+    image: jenkins/jenkins:alpine
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+
+volumes:
+  jenkins_home:
