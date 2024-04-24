@@ -1,40 +1,22 @@
-variable "domain_name" {
-  description = "The name of the domain for our website."
-  default = "220424-tflearn-1"
-}
+# VPC & Subnet
 
-data "aws_iam_policy_document" "bucket_policy" {
-  statement {
-    sid = "PublicReadGetObject"
-    effect = "Allow"
-    actions = [ "s3:GetObject" ]
-    principals {
-      type = "*"
-      identifiers = [ "*" ]
-    }
-    resources = [ "arn:aws:s3:::${var.domain_name}" ]
+resource "aws_vpc" "dev" {
+  cidr_block  = var.vpc_cidr
+
+  tags = {
+    Name = var.vpc_name
   }
+
 }
 
-/* We can access properties from data sources using this format:
-   ${data.<data_source_type>.<data_source_name>.<property>.
+resource "aws_subnet" "dev" {
+  count       = length(var.subnets)
+  vpc_id      = aws_vpc.dev.id
 
-   In this case, we need the JSON document, which the documentation
-   says can be accessed from the .json property. */
+  cidr_block  = cidrsubnet(aws_vpc.dev.cidr_block, 4, count.index + 1)
 
-resource "aws_s3_bucket" "website" {
-  bucket = var.domain_name          // The name of the bucket.
-  acl    = "public-read"            /* Access control list for the bucket.
-                                       Websites need to be publicly-available
-                                       to the Internet for website hosting to
-                                       work. */
-  policy = data.aws_iam_policy_document.bucket_policy.json
-  website {
-    index_document = "index.htm"   // The root of the website.
-    error_document = "error.htm"   // The page to show when people hit invalid pages.
+  tags = {
+    Name = var.subnets[count.index]
   }
-}
 
-output "website_bucket_url" {
-  value = aws_s3_bucket.website.website_endpoint
 }
